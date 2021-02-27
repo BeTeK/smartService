@@ -28,7 +28,7 @@ function intersection(setA, setB) {
     return _intersection
 }
 
-function getCommonSmartParameters(driveData, selectedDrives, parametersEl){
+function getCommonSmartParameters(driveData, selectedDrives){
   var commonParameters = new Set();
   var first = true;
   for(var driveIndex of selectedDrives){
@@ -138,9 +138,8 @@ function selectedDrivesAsList(drivesLst){
 }
 
 
-function createDriveSelection(service, chart, driveData, drivesEl, parametersEl){
+function createDriveSelection(service, chart, driveData, drivesEl, drivesSelectedFn){
   drivesEl.empty();
-  parametersEl.empty();
   var driveListEl = $("<li/>");
   var driveLst = [];
   
@@ -149,13 +148,9 @@ function createDriveSelection(service, chart, driveData, drivesEl, parametersEl)
     
     driveSelect.change(() => {
       var selectedDrives = selectedDrivesAsList(driveLst);
-      var parametersToShow = getCommonSmartParameters(driveData, selectedDrives, parametersEl);
-      var onSelectedFn = (selected) => {
-        updateGraph(service, chart, driveData, selectedDrives, selected);
-      };
-      updateParameters(service, chart, driveData, parametersToShow, parametersEl, onSelectedFn);
+      drivesSelectedFn(selectedDrives);
     });
-    
+   
     var selectName = "drive_select_" + index;
     driveSelect.attr("type", "checkbox");
     driveSelect.attr("name", selectName)
@@ -254,7 +249,15 @@ function setGraphOptions(service, chart, driveData){
     
     var type = $(eventObj.currentTarget).val();
     if(type == "drive"){
-      createDriveSelection(service, chart, driveData, $("#drives"), $("#parameters"));
+      var drivesSelectedFn = (selectedDrives) => {
+        var parametersToShow = getCommonSmartParameters(driveData, selectedDrives);
+        var onSelectedFn = (selected) => {
+          updateGraph(service, chart, driveData, selectedDrives, selected);
+        };
+        updateParameters(service, chart, driveData, parametersToShow, $("#parameters"), onSelectedFn);
+      };
+ 
+      createDriveSelection(service, chart, driveData, $("#drives"), drivesSelectedFn);
     }
     else if(type == "parameters"){
       createParametersSelection(service, chart, driveData, $("#drives"), $("#parameters"));
