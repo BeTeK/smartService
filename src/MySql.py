@@ -145,8 +145,8 @@ class MySql:
       parametersIds.add(i[1])
 
     sqlParamsStr = ",".join("%s" for i in parametersIds)
-    c.execute("SELECT id, name FROM Parameters WHERE id IN (" + sqlParamsStr + ")", parametersIds)
-    parameters = dict(c.fetchall())
+    c.execute("SELECT id, name, smartParamId FROM Parameters WHERE id IN (" + sqlParamsStr + ")", parametersIds)
+    parameters = dict((i[0], {"name" : i[1], "smartId" : i[2]}) for i in c.fetchall())
     
     return {"parameters" : parameters, "devices" : result}
   
@@ -154,7 +154,7 @@ class MySql:
     return self._doQuery(lambda c: self._getDevicesQuery(c))
 
   def _getSeriesQuery(self, c, parameterId, startTime, endTime, devices):
-    sql = "SELECT value, raw, timestamp, devicesId FROM ParameterValues WHERE parameterId = %s AND %s <= timestamp AND timestamp <= %s AND devicesId in (" + ",".join("%s" for i in devices) + ")"
+    sql = "SELECT value, raw, timestamp, devicesId, rawString FROM ParameterValues WHERE parameterId = %s AND %s <= timestamp AND timestamp <= %s AND devicesId in (" + ",".join("%s" for i in devices) + ")"
     c.execute(sql, [parameterId, startTime, endTime] + devices)
     
     results = {}
@@ -163,7 +163,7 @@ class MySql:
       if i[3] not in results:
         results[i[3]] = []
 
-      results[i[3]].append({"value": i[0], "timestamp": i[2], "raw" : i[1]})
+      results[i[3]].append({"value": i[0], "timestamp": i[2], "raw" : i[1], "rawString" : i[4]})
     return results
   
   def getSeries(self, parameterId, startTime, endTime, devices):
