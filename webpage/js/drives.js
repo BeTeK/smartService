@@ -50,8 +50,8 @@ function getCommonSmartParameters(driveData, selectedDrives, parametersEl){
   return ret;
 }
 
-function updateParameters(service, chart, driveData, selectedDrives, parametersEl){
-  var commonParameters = getCommonSmartParameters(driveData, selectedDrives, parametersEl);
+function updateParameters(service, chart, driveData, parametersToShow, parametersEl, onSelectedFn){
+  var commonParameters = parametersToShow;
   parametersEl.empty();
   var parametersListEl = $("<li/>");
   
@@ -75,7 +75,7 @@ function updateParameters(service, chart, driveData, selectedDrives, parametersE
 
     radio.change(() => {
       var selected = $("input[name='parameters']:checked").val();
-      updateGraph(service, chart, driveData, selectedDrives, selected);
+      onSelectedFn(selected);
     });
     
     index += 1;
@@ -149,7 +149,11 @@ function createDriveSelection(service, chart, driveData, drivesEl, parametersEl)
     
     driveSelect.change(() => {
       var selectedDrives = selectedDrivesAsList(driveLst);
-      updateParameters(service, chart, driveData, selectedDrives, parametersEl);
+      var parametersToShow = getCommonSmartParameters(driveData, selectedDrives, parametersEl);
+      var onSelectedFn = (selected) => {
+        updateGraph(service, chart, driveData, selectedDrives, selected);
+      };
+      updateParameters(service, chart, driveData, parametersToShow, parametersEl, onSelectedFn);
     });
     
     var selectName = "drive_select_" + index;
@@ -173,6 +177,8 @@ function createParametersSelection(service, chart, driveData, parametersEl, driv
   drivesEl.empty();
   parametersEl.empty();
 }
+
+
 function createChart(){
   var options = {
     series: [],
