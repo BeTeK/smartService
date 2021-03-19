@@ -138,12 +138,12 @@ function selectedDrivesAsList(drivesLst){
 }
 
 
-function createDriveSelection(service, chart, driveData, drivesEl, drivesSelectedFn){
+function createDriveSelection(service, chart, drivesToShow, drivesEl, drivesSelectedFn){
   drivesEl.empty();
   var driveListEl = $("<li/>");
   var driveLst = [];
   
-  $.each(driveData.devices, (index, value) => {
+  $.each(drivesToShow, (index, value) => {
     var driveSelect = $("<input/>");
     
     driveSelect.change(() => {
@@ -241,6 +241,43 @@ function createChart(){
   return chart;
 }
 
+function getAllParameters(driveData){
+  var commonParameters = new Set();
+  var first = true;
+  for(var driveIndex in driveData.devices){
+    if(first){
+      commonParameters = new Set(driveData.devices[driveIndex].parametersIds);
+      first = false;
+    }
+    else{
+      for(var parameterId of driveData.devices[driveIndex].parametersIds){
+        commonParameters.add(parameterId);
+      }
+    }
+  }
+
+  var ret = [];
+  for(var paramIndex of commonParameters){
+    ret.push({"paramId" : paramIndex,
+              "name" : driveData.parameters[paramIndex].name,
+              "smartId" : driveData.parameters[paramIndex].smartId});
+  }
+  return ret;
+}
+
+function selectPotentialDrives(drives, selectedParamId){
+
+  var ret = {};
+  for(var deviceIndex in drives.devices){
+    var device = drives.devices[deviceIndex];
+    if(new Set(device.parametersIds).has(selectedParamId)){
+      ret[deviceIndex] = device;
+    }
+  }
+  
+  return ret;
+}
+
 function setGraphOptions(service, chart, driveData){
   var graphType = createGraphTypeOptions()
   graphType.change(function(eventObj){
@@ -257,10 +294,19 @@ function setGraphOptions(service, chart, driveData){
         updateParameters(service, chart, driveData, parametersToShow, $("#parameters"), onSelectedFn);
       };
  
-      createDriveSelection(service, chart, driveData, $("#drives"), drivesSelectedFn);
+      createDriveSelection(service, chart, driveData.devices, $("#drives"), drivesSelectedFn);
     }
-    else if(type == "parameters"){
-      createParametersSelection(service, chart, driveData, $("#drives"), $("#parameters"));
+    else if(type == "parameter"){
+      var allParameters = getAllParameters(driveData);
+
+      var selectedParametersFn = (selected) => {
+        var potentialDrives = selectPotentialDrives(driveData, parseInt(selected));
+        var driveSelectedFn = (driveIds) => {
+          updateGraph(service, chart, driveData, driveIds, selected);
+        };
+        createDriveSelection(service, chart, potentialDrives, $("#parameters"), driveSelectedFn);
+      };
+      updateParameters(service, chart, driveData, allParameters, $("#drives"), selectedParametersFn);
     }
     else{
       

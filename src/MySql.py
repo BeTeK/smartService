@@ -154,16 +154,18 @@ class MySql:
     return self._doQuery(lambda c: self._getDevicesQuery(c))
 
   def _getSeriesQuery(self, c, parameterId, startTime, endTime, devices):
-    sql = "SELECT value, raw, timestamp, devicesId, rawString FROM ParameterValues WHERE parameterId = %s AND %s <= timestamp AND timestamp <= %s AND devicesId in (" + ",".join("%s" for i in devices) + ")"
-    c.execute(sql, [parameterId, startTime, endTime] + devices)
-    
     results = {}
+    if len(devices) > 0:
+      sql = "SELECT value, raw, timestamp, devicesId, rawString FROM ParameterValues WHERE parameterId = %s AND %s <= timestamp AND timestamp <= %s AND devicesId in (" + ",".join("%s" for i in devices) + ")"
+      c.execute(sql, [parameterId, startTime, endTime] + devices)
+    
 
-    for i in c.fetchall():
-      if i[3] not in results:
-        results[i[3]] = []
+      for i in c.fetchall():
+        if i[3] not in results:
+          results[i[3]] = []
 
-      results[i[3]].append({"value": i[0], "timestamp": i[2], "raw" : i[1], "rawString" : i[4]})
+        results[i[3]].append({"value": i[0], "timestamp": i[2], "raw" : i[1], "rawString" : i[4]})
+          
     return results
   
   def getSeries(self, parameterId, startTime, endTime, devices):

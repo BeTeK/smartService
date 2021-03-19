@@ -1,0 +1,9 @@
+#mainScreen {
+  display: flex;
+  flex-direction: column;
+}
+
+#graphConfiguration {
+  display: flex;
+  flex-direction: row;
+}
